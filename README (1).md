@@ -101,3 +101,15 @@ docker compose up --build
 - **Docker Compose** — orchestrates multi-container local environment (`docker-compose.yml`).
 - **Git** — version control, GitHub Flow branching.
 - **VS Code / IntelliJ** — primary editors for backend (Java) and frontend (React Native).
+- ## Software Design
+
+- Architecture diagram (editable): `docs/design/LifeOS-architecture.drawio`
+- Architecture diagram (image): `docs/design/architecture.png`
+- UI wireframes: `docs/design/wireframes/`
+- Full design document: `docs/design/LifeOS-Software-Design-Document.pdf`
+
+LifeOS uses a layered client–server architecture (React Native + Expo Router client,
+Spring Boot REST API, PostgreSQL) chosen for clear separation of concerns and to match
+a solo-developer, phased build timeline. Each feature module (Tasks, Habits, Notes,
+Counters) follows an identical load/save abstraction and shares one design-token file,
+keeping the codebase modular, cohesive, and loosely coupled as new modules are added.
