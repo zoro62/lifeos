@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="LifeOS Architecture" id="lifeos-arch">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Client Layer cluster -->
+        <mxCell id="c1" value="Client Layer (React Native + Expo Router)" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;strokeColor=#4A6FA5;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="440" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="c1a" value="Screens&#10;(Dashboard, Tasks, Habits, Notes, Counters)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#4A6FA5;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="130" y="80" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c1b" value="Shared Components&#10;(Card, Theme Tokens)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#4A6FA5;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="60" y="160" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c1c" value="Local State + AsyncStorage&#10;(offline-first cache)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#4A6FA5;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="210" y="160" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c1d" value="API Client&#10;(fetch wrapper, config.js)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#4A6FA5;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="360" y="160" width="110" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Application Layer cluster -->
+        <mxCell id="c2" value="Application Layer (Spring Boot REST API)" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;strokeColor=#5B8C5A;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="560" y="40" width="380" height="360" as="geometry" />
+        </mxCell>
+        <mxCell id="c2a" value="Security / CORS Config" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#5B8C5A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="640" y="80" width="220" height="45" as="geometry" />
+        </mxCell>
+        <mxCell id="c2b" value="Controllers&#10;(TaskController, HabitController, ...)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#5B8C5A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="620" y="170" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c2c" value="Service Layer&#10;(business logic, validation)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#5B8C5A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="620" y="255" width="260" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="c2d" value="Repository Layer&#10;(Spring Data JPA)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#5B8C5A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="620" y="340" width="260" height="45" as="geometry" />
+        </mxCell>
+
+        <!-- Data Layer cluster -->
+        <mxCell id="c3" value="Data Layer" style="rounded=1;whiteSpace=wrap;html=1;verticalAlign=top;fontStyle=1;fontSize=14;strokeColor=#B3564A;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="560" y="440" width="480" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="c3a" value="PostgreSQL&#10;(Users, Tasks, Habits, Notes,&#10;Counters, Goals)" style="rounded=1;whiteSpace=wrap;html=1;strokeColor=#B3564A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="580" y="480" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="c3b" value="Redis (planned)&#10;sessions / hot data" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;strokeColor=#B3564A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="800" y="480" width="110" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="c3c" value="AWS S3 (planned)&#10;attachments / documents" style="rounded=1;dashed=1;whiteSpace=wrap;html=1;strokeColor=#B3564A;fillColor=#FFFFFF;" vertex="1" parent="1">
+          <mxGeometry x="930" y="480" width="100" height="70" as="geometry" />
+        </mxCell>
+
+        <!-- Edges -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;" edge="1" parent="1" source="c1a" target="c1b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;" edge="1" parent="1" source="c1a" target="c1c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;" edge="1" parent="1" source="c1a" target="c1d"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" value="HTTPS / JSON REST" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1A1A1A;" edge="1" parent="1" source="c1d" target="c2b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;dashed=1;" edge="1" parent="1" source="c2a" target="c2b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;" edge="1" parent="1" source="c2b" target="c2c"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;" edge="1" parent="1" source="c2c" target="c2d"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e8" value="JDBC" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#1A1A1A;" edge="1" parent="1" source="c2d" target="c3a"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;dashed=1;" edge="1" parent="1" source="c2c" target="c3b"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#8A8A8E;dashed=1;" edge="1" parent="1" source="c2c" target="c3c"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
