@@ -1,0 +1,1 @@
+export const API_BASE_URL = 'http://10.181.58.109:8080/api';

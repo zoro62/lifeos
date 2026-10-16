@@ -1,180 +1,73 @@
-import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
-import { Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import Card from '../components/Card';
+import { AddRow, Chip, Empty, Header, IconButton, Screen } from '../components/ui';
+import useStoredList from '../lib/data';
+import { colors, spacing } from '../theme/colors';
 
-import { ExternalLink } from '@/components/external-link';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Collapsible } from '@/components/ui/collapsible';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+const PRIORITIES = ['Low', 'Medium', 'High'];
+const weight: any = { High: 0, Medium: 1, Low: 2 };
+const tint: any = { High: colors.danger, Medium: colors.accent, Low: colors.textMuted };
 
-export default function TabTwoScreen() {
-  const safeAreaInsets = useSafeAreaInsets();
-  const insets = {
-    ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+export default function TasksScreen() {
+  const [tasks, setTasks] = useStoredList('lifeos_tasks');
+  const [input, setInput] = useState('');
+  const [priority, setPriority] = useState('Medium');
+  const [filter, setFilter] = useState('All');
+
+  const add = () => {
+    const title = input.trim();
+    if (!title) return;
+    setTasks((prev: any[]) => [{ id: Date.now().toString(), title, done: false, priority }, ...prev]);
+    setInput('');
   };
-  const theme = useTheme();
+  const toggle = (id: string) => setTasks((p: any[]) => p.map(t => (t.id === id ? { ...t, done: !t.done } : t)));
+  const remove = (id: string) => setTasks((p: any[]) => p.filter(t => t.id !== id));
+  const clearDone = () => setTasks((p: any[]) => p.filter(t => !t.done));
 
-  const contentPlatformStyle = Platform.select({
-    android: {
-      paddingTop: insets.top,
-      paddingLeft: insets.left,
-      paddingRight: insets.right,
-      paddingBottom: insets.bottom,
-    },
-    web: {
-      paddingTop: Spacing.six,
-      paddingBottom: Spacing.four,
-    },
-  });
+  const left = tasks.filter((t: any) => !t.done).length;
+  const visible = tasks
+    .filter((t: any) => filter === 'All' || (filter === 'Active' ? !t.done : t.done))
+    .sort((a: any, b: any) => Number(a.done) - Number(b.done) || (weight[a.priority] ?? 1) - (weight[b.priority] ?? 1));
 
   return (
-    <ScrollView
-      style={[styles.scrollView, { backgroundColor: theme.background }]}
-      contentInset={insets}
-      contentContainerStyle={[styles.contentContainer, contentPlatformStyle]}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="subtitle">Explore</ThemedText>
-          <ThemedText style={styles.centerText} themeColor="textSecondary">
-            This starter app includes example{'\n'}code to help you get started.
-          </ThemedText>
+    <Screen>
+      <Header title="Tasks" subtitle={`${left} left · ${tasks.length} total`} />
+      <AddRow value={input} onChangeText={setInput} onSubmit={add} placeholder="Add a task..." />
 
-          <ExternalLink href="https://docs.expo.dev" asChild>
-            <Pressable style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundElement" style={styles.linkButton}>
-                <ThemedText type="link">Expo documentation</ThemedText>
-                <SymbolView
-                  tintColor={theme.text}
-                  name={{ ios: 'arrow.up.right.square', android: 'link', web: 'link' }}
-                  size={12}
-                />
-              </ThemedView>
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+        {PRIORITIES.map(p => <Chip key={p} label={p} active={priority === p} onPress={() => setPriority(p)} />)}
+      </View>
+
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, alignItems: 'center' }}>
+        {['All', 'Active', 'Done'].map(f => <Chip key={f} label={f} active={filter === f} onPress={() => setFilter(f)} />)}
+        <Pressable onPress={clearDone} style={{ marginLeft: 'auto' }}>
+          <Text style={{ color: colors.textMuted, fontSize: 13 }}>Clear done</Text>
+        </Pressable>
+      </View>
+
+      <FlatList
+        data={visible}
+        keyExtractor={(i: any) => i.id}
+        style={{ marginTop: spacing.md }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={<Empty text="No tasks here" icon="checkbox-outline" />}
+        renderItem={({ item }: any) => (
+          <Card style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <Pressable onPress={() => toggle(item.id)}>
+              <Ionicons name={item.done ? 'checkmark-circle' : 'ellipse-outline'} size={24} color={item.done ? colors.accent : colors.border} />
             </Pressable>
-          </ExternalLink>
-        </ThemedView>
-
-        <ThemedView style={styles.sectionsWrapper}>
-          <Collapsible title="File-based routing">
-            <ThemedText type="small">
-              This app has two screens: <ThemedText type="code">src/app/index.tsx</ThemedText> and{' '}
-              <ThemedText type="code">src/app/explore.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText type="small">
-              The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedView type="backgroundElement" style={styles.collapsibleContent}>
-              <ThemedText type="small">
-                You can open this project on Android, iOS, and the web. To open the web version,
-                press <ThemedText type="smallBold">w</ThemedText> in the terminal running this
-                project.
-              </ThemedText>
-              <Image
-                source={require('@/assets/images/tutorial-web.png')}
-                style={styles.imageTutorial}
-              />
-            </ThemedView>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText type="small">
-              For static images, you can use the <ThemedText type="code">@2x</ThemedText> and{' '}
-              <ThemedText type="code">@3x</ThemedText> suffixes to provide files for different
-              screen densities.
-            </ThemedText>
-            <Image source={require('@/assets/images/react-logo.png')} style={styles.imageReact} />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Light and dark mode components">
-            <ThemedText type="small">
-              This template has light and dark mode support. The{' '}
-              <ThemedText type="code">useColorScheme()</ThemedText> hook lets you inspect what the
-              user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-              <ThemedText type="linkPrimary">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Animations">
-            <ThemedText type="small">
-              This template includes an example of an animated component. The{' '}
-              <ThemedText type="code">src/components/ui/collapsible.tsx</ThemedText> component uses
-              the powerful <ThemedText type="code">react-native-reanimated</ThemedText> library to
-              animate opening this hint.
-            </ThemedText>
-          </Collapsible>
-        </ThemedView>
-        {Platform.OS === 'web' && <WebBadge />}
-      </ThemedView>
-    </ScrollView>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 15, color: item.done ? colors.textMuted : colors.text, textDecorationLine: item.done ? 'line-through' : 'none' }}>
+                {item.title}
+              </Text>
+              <Text style={{ fontSize: 11, color: tint[item.priority] || colors.textMuted, marginTop: 2 }}>{item.priority || 'Medium'}</Text>
+            </View>
+            <IconButton name="trash-outline" onPress={() => remove(item.id)} />
+          </Card>
+        )}
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  container: {
-    maxWidth: MaxContentWidth,
-    flexGrow: 1,
-  },
-  titleContainer: {
-    gap: Spacing.three,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.six,
-  },
-  centerText: {
-    textAlign: 'center',
-  },
-  pressed: {
-    opacity: 0.7,
-  },
-  linkButton: {
-    flexDirection: 'row',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
-    justifyContent: 'center',
-    gap: Spacing.one,
-    alignItems: 'center',
-  },
-  sectionsWrapper: {
-    gap: Spacing.five,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.three,
-  },
-  collapsibleContent: {
-    alignItems: 'center',
-  },
-  imageTutorial: {
-    width: '100%',
-    aspectRatio: 296 / 171,
-    borderRadius: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  imageReact: {
-    width: 100,
-    height: 100,
-    alignSelf: 'center',
-  },
-});

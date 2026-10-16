@@ -113,3 +113,16 @@ Spring Boot REST API, PostgreSQL) chosen for clear separation of concerns and to
 a solo-developer, phased build timeline. Each feature module (Tasks, Habits, Notes,
 Counters) follows an identical load/save abstraction and shares one design-token file,
 keeping the codebase modular, cohesive, and loosely coupled as new modules are added.
+
+## Software Design
+
+- Architecture diagram (editable): `docs/design/LifeOS-architecture.drawio`
+- Architecture diagram (image): `docs/design/architecture.png`
+- UI wireframes: `docs/design/wireframe-1-login.png` through `wireframe-6-counters.png`
+- Full design document: `docs/design/LifeOS-Software-Design-Document.pdf`
+
+LifeOS uses a layered client–server architecture (React Native + Expo Router client,
+Spring Boot REST API, PostgreSQL) chosen for clear separation of concerns and to match
+a solo-developer, phased build timeline. Each feature module (Tasks, Habits, Notes,
+Counters) follows an identical load/save abstraction and shares one design-token file,
+keeping the codebase modular, cohesive, and loosely coupled as new modules are added.
