@@ -2,117 +2,177 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Card from '../components/Card';
-import { Header, IconButton, ProgressBar, Screen, Stat } from '../components/ui';
-import { dayKey, daysUntil, money, useAllData } from '../lib/data';
+import { IconBubble, ProgressRing, Screen } from '../components/ui';
+import { calcStreak, dayKey, daysUntil, money, useAllData } from '../lib/data';
 import { insights, spendMonth } from '../lib/insights';
-import { colors, radius, spacing } from '../theme/colors';
+import { cancelIds, fmtIn, nextOccurrence } from '../lib/notify';
+import { colors, radius, shadow, spacing } from '../theme/colors';
 
-export default function Dashboard() {
+export default function Home() {
   const router = useRouter();
   const d: any = useAllData();
-  const { tasks, habits, events, focus, water, settings, setWater } = d;
+  const { tasks, setTasks, habits, setHabits, events, focus, water, setWater, settings, alarms } = d;
+  const today = dayKey(0);
 
   const hour = new Date().getHours();
-  const name = settings.name ? `, ${settings.name}` : '';
-  const greeting = (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening') + name;
-  const date = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const initial = (settings.name || 'L').trim().charAt(0).toUpperCase();
 
   const pending = tasks.filter((t: any) => !t.done);
-  const habitsDone = habits.filter((h: any) => (h.log || []).includes(dayKey(0))).length;
+  const habitsDone = habits.filter((h: any) => (h.log || []).includes(today)).length;
   const total = tasks.length + habits.length;
-  const progress = tasks.length - pending.length + habitsDone;
-  const waterToday = water[dayKey(0)] || 0;
+  const done = tasks.length - pending.length + habitsDone;
+  const pct = total ? Math.round((done / total) * 100) : 0;
   const waterGoal = settings.waterGoal || 8;
-  const focusToday = focus.filter((f: any) => f.date === dayKey(0)).reduce((s: number, f: any) => s + f.minutes, 0);
+  const focusToday = focus.filter((f: any) => f.date === today).reduce((s: number, f: any) => s + f.minutes, 0);
+  const best = Math.max(0, ...habits.map((h: any) => calcStreak(h.log || [])));
+  const nextAlarm = alarms.filter((a: any) => a.enabled).map((a: any) => nextOccurrence(a)).filter(Boolean).sort((a: any, b: any) => a - b)[0];
   const upcoming = events.filter((e: any) => daysUntil(e.date) >= 0).sort((a: any, b: any) => a.date.localeCompare(b.date)).slice(0, 3);
   const tips = insights(d).slice(0, 3);
 
+  const toggleTask = (t: any) => {
+    if (!t.done && t.notifId) cancelIds([t.notifId]);
+    setTasks((p: any[]) => p.map(x => (x.id === t.id ? { ...x, done: !x.done } : x)));
+  };
+  const toggleHabit = (id: string) =>
+    setHabits((p: any[]) => p.map(h => {
+      if (h.id !== id) return h;
+      const log = h.log || [];
+      return { ...h, log: log.includes(today) ? log.filter((x: string) => x !== today) : [...log, today] };
+    }));
+
   const actions: any[] = [
-    ['add-circle-outline', 'Task', () => router.push('/explore')],
-    ['timer-outline', 'Focus', () => router.push('/focus')],
-    ['water-outline', '+1 Water', () => setWater((w: any) => ({ ...w, [dayKey(0)]: (w[dayKey(0)] || 0) + 1 }))],
-    ['book-outline', 'Journal', () => router.push('/journal')],
+    ['add-circle', 'Task', () => router.push('/explore')],
+    ['timer', 'Focus', () => router.push('/focus')],
+    ['water', '+1 Water', () => setWater((w: any) => ({ ...w, [today]: (w[today] || 0) + 1 }))],
+    ['book', 'Journal', () => router.push('/journal')],
   ];
-  const label: any = { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: spacing.sm };
-  const line: any = { fontSize: 14, color: colors.textMuted, marginBottom: 4 };
+
+  const Tile = ({ icon, label, value, sub, onPress }: any) => (
+    <Pressable onPress={onPress} style={{ flex: 1 }}>
+      <Card style={{ marginBottom: 0 }}>
+        <IconBubble name={icon} size={36} />
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.text, marginTop: 10 }}>{value}</Text>
+        <Text style={{ fontSize: 12, color: colors.textMuted }}>{label}</Text>
+        {sub ? <Text style={{ fontSize: 11, color: colors.accent, marginTop: 2 }}>{sub}</Text> : null}
+      </Card>
+    </Pressable>
+  );
+  const heading = { fontSize: 16, fontWeight: '700' as const, color: colors.text };
 
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Header
-          title={greeting}
-          subtitle={date}
-          right={
-            <View style={{ flexDirection: 'row', gap: 6 }}>
-              <IconButton name="search-outline" size={22} onPress={() => router.push('/search')} />
-              <IconButton name="settings-outline" size={22} onPress={() => router.push('/settings')} />
-            </View>
-          }
-        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg }}>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: colors.textMuted, fontSize: 14 }}>{greet}</Text>
+            <Text style={{ fontSize: 26, fontWeight: '800', color: colors.text }}>{settings.name || 'Welcome'}</Text>
+          </View>
+          <Pressable onPress={() => router.push('/search')} style={{ marginRight: spacing.md }}>
+            <Ionicons name="search" size={22} color={colors.text} />
+          </Pressable>
+          <Pressable onPress={() => router.push('/settings')} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 16 }}>{initial}</Text>
+          </Pressable>
+        </View>
 
-        <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
+        <View style={{ backgroundColor: colors.accent, borderRadius: radius.lg, padding: spacing.lg, flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md, ...shadow }}>
+          <ProgressRing size={104} stroke={11} value={done} max={total}>
+            <Text style={{ color: '#FFFFFF', fontSize: 24, fontWeight: '800' }}>{pct}%</Text>
+          </ProgressRing>
+          <View style={{ flex: 1, marginLeft: spacing.lg }}>
+            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>Today's progress</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 21, fontWeight: '700', marginTop: 2 }}>
+              {total === 0 ? 'Add your first task' : `${done} of ${total} done`}
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 2 }}>
+              {pending.length} tasks · {habits.length - habitsDone} habits left
+            </Text>
+            {nextAlarm ? (
+              <Pressable onPress={() => router.push('/alarms')} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, backgroundColor: 'rgba(255,255,255,0.18)', alignSelf: 'flex-start', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+                <Ionicons name="alarm" size={14} color="#FFFFFF" />
+                <Text style={{ color: '#FFFFFF', fontSize: 12, marginLeft: 4 }}>Alarm in {fmtIn(nextAlarm)}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md }}>
           {actions.map(([icon, text, onPress]) => (
-            <Pressable key={text} onPress={onPress} style={{ flex: 1, alignItems: 'center', paddingVertical: spacing.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.md }}>
-              <Ionicons name={icon} size={22} color={colors.accent} />
-              <Text style={{ fontSize: 11, color: colors.text, marginTop: 4 }}>{text}</Text>
+            <Pressable key={text} onPress={onPress} style={{ alignItems: 'center', flex: 1 }}>
+              <IconBubble name={icon} size={52} />
+              <Text style={{ fontSize: 12, color: colors.text, marginTop: 6, fontWeight: '500' }}>{text}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Card>
-          <Text style={label}>Today's progress</Text>
-          <ProgressBar value={progress} max={total} />
-          <Text style={[line, { marginTop: spacing.sm }]}>
-            {total === 0 ? 'Add tasks or habits to get started' : `${progress} of ${total} done (tasks + habits)`}
-          </Text>
-        </Card>
-
+        <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.sm }}>
+          <Tile icon="water" label="Water" value={`${water[today] || 0}/${waterGoal}`} onPress={() => router.push('/health')} />
+          <Tile icon="timer" label="Focus today" value={`${focusToday}m`} onPress={() => router.push('/focus')} />
+        </View>
         <View style={{ flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.md }}>
-          <Stat icon="water-outline" label="Water" value={`${waterToday}/${waterGoal}`} />
-          <Stat icon="timer-outline" label="Focus min" value={focusToday} />
-          <Stat icon="wallet-outline" label="Spent (month)" value={money(spendMonth(d.expenses))} />
+          <Tile icon="flame" label="Best streak" value={`${best}d`} onPress={() => router.push('/habits')} />
+          <Tile icon="wallet" label="Spent this month" value={money(spendMonth(d.expenses))} onPress={() => router.push('/expenses')} />
         </View>
 
-        <Card>
+        <Card style={{ backgroundColor: colors.accentSoft }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm }}>
-            <Ionicons name="sparkles-outline" size={18} color={colors.accent} />
-            <Text style={[label, { marginBottom: 0, marginLeft: 6 }]}>Smart insights</Text>
+            <Ionicons name="sparkles" size={18} color={colors.accent} />
+            <Text style={[heading, { marginLeft: 6 }]}>Smart insights</Text>
           </View>
-          {tips.map((t: string, i: number) => <Text key={i} style={line}>• {t}</Text>)}
+          {tips.map((t: string, i: number) => <Text key={i} style={{ color: colors.text, fontSize: 14, marginBottom: 4 }}>• {t}</Text>)}
           <Pressable onPress={() => router.push('/assistant')}>
-            <Text style={{ color: colors.accent, fontSize: 13, marginTop: 4 }}>Ask the assistant</Text>
+            <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600', marginTop: 4 }}>Ask the assistant</Text>
           </Pressable>
         </Card>
 
-        <Pressable onPress={() => router.push('/explore')}>
-          <Card>
-            <Text style={label}>Today's tasks</Text>
-            {pending.length === 0 ? <Text style={line}>You're all caught up</Text> :
-              pending.slice(0, 3).map((t: any) => <Text key={t.id} style={line}>• {t.title}</Text>)}
-            {pending.length > 3 && <Text style={line}>+ {pending.length - 3} more</Text>}
-          </Card>
-        </Pressable>
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+            <Text style={heading}>Tasks</Text>
+            <Pressable onPress={() => router.push('/explore')}><Text style={{ color: colors.accent, fontSize: 13 }}>See all</Text></Pressable>
+          </View>
+          {pending.length === 0 ? <Text style={{ color: colors.textMuted }}>You're all caught up</Text> :
+            pending.slice(0, 4).map((t: any) => (
+              <Pressable key={t.id} onPress={() => toggleTask(t)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6 }}>
+                <Ionicons name="ellipse-outline" size={22} color={colors.outline} />
+                <Text style={{ marginLeft: 10, color: colors.text, fontSize: 15, flex: 1 }}>{t.title}</Text>
+              </Pressable>
+            ))}
+        </Card>
 
-        <Pressable onPress={() => router.push('/habits')}>
-          <Card>
-            <Text style={label}>Habits</Text>
-            <ProgressBar value={habitsDone} max={habits.length} />
-            <Text style={[line, { marginTop: spacing.sm }]}>
-              {habits.length === 0 ? 'No habits yet' : `${habitsDone} of ${habits.length} done today`}
-            </Text>
-          </Card>
-        </Pressable>
-
-        <Pressable onPress={() => router.push('/calendar')}>
-          <Card>
-            <Text style={label}>Upcoming</Text>
-            {upcoming.length === 0 ? <Text style={line}>No upcoming events</Text> :
-              upcoming.map((e: any) => {
-                const n = daysUntil(e.date);
-                return <Text key={e.id} style={line}>• {e.title} ({n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`})</Text>;
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+            <Text style={heading}>Habits today</Text>
+            <Pressable onPress={() => router.push('/habits')}><Text style={{ color: colors.accent, fontSize: 13 }}>See all</Text></Pressable>
+          </View>
+          {habits.length === 0 ? <Text style={{ color: colors.textMuted }}>No habits yet</Text> : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+              {habits.slice(0, 6).map((h: any) => {
+                const on = (h.log || []).includes(today);
+                return (
+                  <Pressable key={h.id} onPress={() => toggleHabit(h.id)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: on ? colors.accent : colors.background, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8 }}>
+                    <Ionicons name={on ? 'checkmark-circle' : 'ellipse-outline'} size={16} color={on ? '#FFFFFF' : colors.textMuted} />
+                    <Text style={{ marginLeft: 6, fontSize: 13, color: on ? '#FFFFFF' : colors.text }}>{h.title}</Text>
+                  </Pressable>
+                );
               })}
-          </Card>
-        </Pressable>
+            </View>
+          )}
+        </Card>
+
+        <Card>
+          <Text style={[heading, { marginBottom: spacing.sm }]}>Upcoming</Text>
+          {upcoming.length === 0 ? <Text style={{ color: colors.textMuted }}>No upcoming events</Text> :
+            upcoming.map((e: any) => {
+              const n = daysUntil(e.date);
+              return (
+                <View key={e.id} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 }}>
+                  <Text style={{ color: colors.text, fontSize: 14 }}>{e.title}</Text>
+                  <Text style={{ color: colors.accent, fontSize: 13, fontWeight: '600' }}>{n === 0 ? 'Today' : n === 1 ? 'Tomorrow' : `In ${n} days`}</Text>
+                </View>
+              );
+            })}
+        </Card>
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </Screen>
